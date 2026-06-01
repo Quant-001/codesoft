@@ -92,6 +92,12 @@ const transactionPresets = [
   },
 ];
 
+const decisionOptions = [
+  { label: "Approve", value: "Approved", icon: CheckCircle2 },
+  { label: "Manual Review", value: "Manual Review", icon: AlertTriangle },
+  { label: "Reject", value: "Rejected", icon: XCircle },
+];
+
 const glossaryTerms = [
   {
     term: "Fraud probability",
@@ -239,6 +245,7 @@ function App() {
       const scoredResult = {
         ...data,
         transaction_id: data.transaction_id ?? Date.now(),
+        persisted: Boolean(data.transaction_id),
       };
       setResult(scoredResult);
       if (data.transaction_id) {
@@ -261,6 +268,24 @@ function App() {
 
     setDecisionLoading(decision);
     setError("");
+
+    const applyLocalDecision = () => {
+      setHistory((current) =>
+        current.map((item) =>
+          item.id === result.transaction_id
+            ? { ...item, analyst_decision: decision, decided_at: new Date().toISOString() }
+            : item,
+        ),
+      );
+      setResult((current) => (current ? { ...current, analyst_decision: decision } : current));
+    };
+
+    if (!result.persisted) {
+      applyLocalDecision();
+      setDecisionLoading("");
+      return;
+    }
+
     try {
       await fetchJson(`/decisions/${result.transaction_id}`, {
         method: "POST",
@@ -269,13 +294,8 @@ function App() {
       });
       await refreshOperationalData();
     } catch (err) {
-      setHistory((current) =>
-        current.map((item) =>
-          item.id === result.transaction_id
-            ? { ...item, analyst_decision: decision, decided_at: new Date().toISOString() }
-            : item,
-        ),
-      );
+      applyLocalDecision();
+      setError("Decision saved in this browser, but the backend did not confirm it.");
     } finally {
       setDecisionLoading("");
     }
@@ -410,9 +430,16 @@ function App() {
                 <p className="result-copy">{result.recommendation}</p>
 
                 <div className="decision-actions">
-                  <DecisionButton icon={CheckCircle2} label="Approve" loading={decisionLoading} onClick={submitDecision} />
-                  <DecisionButton icon={AlertTriangle} label="Manual Review" loading={decisionLoading} onClick={submitDecision} />
-                  <DecisionButton icon={XCircle} label="Reject" loading={decisionLoading} onClick={submitDecision} />
+                  {decisionOptions.map((option) => (
+                    <DecisionButton
+                      key={option.value}
+                      icon={option.icon}
+                      label={option.label}
+                      value={option.value}
+                      loading={decisionLoading}
+                      onClick={submitDecision}
+                    />
+                  ))}
                 </div>
 
                 <div className="risk-list">
@@ -483,10 +510,10 @@ function Select({ label, options, ...props }) {
   );
 }
 
-function DecisionButton({ icon: Icon, label, loading, onClick }) {
+function DecisionButton({ icon: Icon, label, value, loading, onClick }) {
   return (
-    <button type="button" onClick={() => onClick(label)} disabled={Boolean(loading)}>
-      {loading === label ? <Loader2 className="spin" size={16} /> : <Icon size={16} />}
+    <button type="button" onClick={() => onClick(value)} disabled={Boolean(loading)}>
+      {loading === value ? <Loader2 className="spin" size={16} /> : <Icon size={16} />}
       {label}
     </button>
   );
