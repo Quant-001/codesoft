@@ -57,19 +57,31 @@ class handler(BaseHTTPRequestHandler):
 
 def predict(transaction):
     risk_factors = get_risk_factors(transaction)
+    explanations = get_explanations(transaction)
     fraud_probability = fallback_probability(transaction, risk_factors)
     prediction = int(fraud_probability >= 0.55)
 
     return {
+        "transaction_id": None,
         "prediction": prediction,
         "label": "Fraudulent" if prediction == 1 else "Legitimate",
         "fraud_probability": round(fraud_probability, 4),
         "model_loaded": False,
         "risk_level": risk_level(fraud_probability),
         "model_source": "Demo rules engine",
+        "model_version": "Random Forest v1.0",
+        "threshold": 0.55,
         "recommendation": recommendation(fraud_probability),
         "risk_factors": risk_factors
         or ["No strong manual risk triggers found for this transaction."],
+        "explanations": explanations
+        or [
+            {
+                "signal": "No strong manual risk triggers found for this transaction.",
+                "impact": "Low",
+                "contribution": 0.0,
+            }
+        ],
     }
 
 
@@ -95,6 +107,60 @@ def get_risk_factors(transaction):
         factors.append("Small population area may need extra location validation.")
 
     return factors[:4]
+
+
+def get_explanations(transaction):
+    explanations = []
+    amount = float(transaction.get("amt", 0))
+    category = str(transaction.get("category", "")).lower()
+    city_pop = int(transaction.get("city_pop", 0))
+    distance = distance_miles(transaction)
+
+    if amount >= 750:
+        explanations.append(
+            {
+                "signal": "Transaction amount is unusually high.",
+                "impact": "High",
+                "contribution": 0.18 if amount >= 1000 else 0.11,
+            }
+        )
+    elif amount >= 300:
+        explanations.append(
+            {
+                "signal": "Transaction amount is above the normal review threshold.",
+                "impact": "Medium",
+                "contribution": 0.11,
+            }
+        )
+
+    if category in {"shopping_net", "misc_net", "grocery_net"}:
+        explanations.append(
+            {
+                "signal": "Online category can carry higher card-not-present risk.",
+                "impact": "Medium",
+                "contribution": 0.11,
+            }
+        )
+
+    if distance >= 250:
+        explanations.append(
+            {
+                "signal": "Merchant location is far from the cardholder location.",
+                "impact": "High" if distance >= 500 else "Medium",
+                "contribution": 0.25 if distance >= 500 else 0.11,
+            }
+        )
+
+    if 0 < city_pop < 5000:
+        explanations.append(
+            {
+                "signal": "Small population area may need extra location validation.",
+                "impact": "Low",
+                "contribution": 0.07,
+            }
+        )
+
+    return explanations[:4]
 
 
 def fallback_probability(transaction, risk_factors):
