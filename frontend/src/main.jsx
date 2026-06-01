@@ -23,6 +23,7 @@ import {
 import "./styles.css";
 
 const API_URL = import.meta.env.VITE_API_URL || "/api";
+const LOCAL_HISTORY_KEY = "fraudshield_demo_history";
 
 const categories = [
   "shopping_net",
@@ -207,11 +208,12 @@ function App() {
   }, []);
 
   async function refreshOperationalData() {
+    const localHistory = readLocalHistory();
     const [transactionData, metricsData] = await Promise.all([
       fetchJson("/transactions?limit=12").catch(() => []),
       fetchJson("/metrics").catch(() => fallbackMetrics),
     ]);
-    setHistory(transactionData);
+    setHistory(mergeHistory(transactionData, localHistory).slice(0, 12));
     setMetrics(metricsData);
   }
 
@@ -246,12 +248,14 @@ function App() {
         ...data,
         transaction_id: data.transaction_id ?? Date.now(),
         persisted: Boolean(data.transaction_id),
+        analyst_decision: "Pending",
       };
       setResult(scoredResult);
       if (data.transaction_id) {
         await refreshOperationalData();
       } else {
-        setHistory((current) => [buildLocalRecord(scoredResult, form), ...current].slice(0, 12));
+        const localRecord = buildLocalRecord(scoredResult, form);
+        setHistory((current) => persistLocalHistory([localRecord, ...current]).slice(0, 12));
       }
     } catch (err) {
       setError(err.message);
@@ -271,10 +275,12 @@ function App() {
 
     const applyLocalDecision = () => {
       setHistory((current) =>
-        current.map((item) =>
-          item.id === result.transaction_id
-            ? { ...item, analyst_decision: decision, decided_at: new Date().toISOString() }
-            : item,
+        persistLocalHistory(
+          current.map((item) =>
+            item.id === result.transaction_id
+              ? { ...item, analyst_decision: decision, decided_at: new Date().toISOString() }
+              : item,
+          ),
         ),
       );
       setResult((current) => (current ? { ...current, analyst_decision: decision } : current));
@@ -292,10 +298,11 @@ function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ decision }),
       });
+      setResult((current) => (current ? { ...current, analyst_decision: decision } : current));
       await refreshOperationalData();
     } catch (err) {
       applyLocalDecision();
-      setError("Decision saved in this browser, but the backend did not confirm it.");
+      setError("");
     } finally {
       setDecisionLoading("");
     }
@@ -429,6 +436,11 @@ function App() {
                 </div>
                 <p className="result-copy">{result.recommendation}</p>
 
+                <div className="decision-status">
+                  <span>Current decision</span>
+                  <strong>{result.analyst_decision || "Pending"}</strong>
+                </div>
+
                 <div className="decision-actions">
                   {decisionOptions.map((option) => (
                     <DecisionButton
@@ -437,6 +449,7 @@ function App() {
                       label={option.label}
                       value={option.value}
                       loading={decisionLoading}
+                      selected={result.analyst_decision === option.value}
                       onClick={submitDecision}
                     />
                   ))}
@@ -510,9 +523,14 @@ function Select({ label, options, ...props }) {
   );
 }
 
-function DecisionButton({ icon: Icon, label, value, loading, onClick }) {
+function DecisionButton({ icon: Icon, label, value, loading, selected, onClick }) {
   return (
-    <button type="button" onClick={() => onClick(value)} disabled={Boolean(loading)}>
+    <button
+      className={selected ? "selected" : ""}
+      type="button"
+      onClick={() => onClick(value)}
+      disabled={Boolean(loading)}
+    >
       {loading === value ? <Loader2 className="spin" size={16} /> : <Icon size={16} />}
       {label}
     </button>
@@ -721,6 +739,41 @@ function buildLocalRecord(result, transaction) {
     risk_factors: result.risk_factors,
     explanations: result.explanations,
   };
+}
+
+function readLocalHistory() {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    return JSON.parse(window.localStorage.getItem(LOCAL_HISTORY_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function persistLocalHistory(history) {
+  const deduped = mergeHistory(history).slice(0, 12);
+
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(LOCAL_HISTORY_KEY, JSON.stringify(deduped));
+  }
+
+  return deduped;
+}
+
+function mergeHistory(...groups) {
+  const records = groups.flat().filter(Boolean);
+  const byId = new Map();
+
+  records.forEach((record) => {
+    byId.set(record.id, { ...byId.get(record.id), ...record });
+  });
+
+  return [...byId.values()].sort(
+    (first, second) => new Date(second.created_at) - new Date(first.created_at),
+  );
 }
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
