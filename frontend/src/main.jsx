@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   BadgeCheck,
   BarChart3,
+  BookOpenText,
   Building2,
   CheckCircle2,
   ChevronRight,
@@ -11,6 +12,7 @@ import {
   Clock3,
   CreditCard,
   Database,
+  Info,
   Loader2,
   MapPin,
   Radar,
@@ -51,6 +53,108 @@ const initialForm = {
   unix_time: 1325376018,
 };
 
+const transactionPresets = [
+  {
+    label: "Normal",
+    icon: BadgeCheck,
+    values: {
+      amt: 42.3,
+      category: "food_dining",
+      merchant: "fraud_Local Cafe",
+      merch_lat: 36.0812,
+      merch_long: -81.1642,
+      city_pop: 3495,
+    },
+  },
+  {
+    label: "Online Risk",
+    icon: AlertTriangle,
+    values: {
+      amt: 875.49,
+      category: "shopping_net",
+      merchant: "fraud_Kilback LLC",
+      merch_lat: 39.742,
+      merch_long: -104.9915,
+      city_pop: 3495,
+    },
+  },
+  {
+    label: "Travel",
+    icon: MapPin,
+    values: {
+      amt: 520.2,
+      category: "travel",
+      merchant: "fraud_Rutherford Group",
+      merch_lat: 34.0522,
+      merch_long: -118.2437,
+      city_pop: 3495,
+    },
+  },
+];
+
+const glossaryTerms = [
+  {
+    term: "Fraud probability",
+    meaning: "The model's estimated chance that this transaction is fraud.",
+    example: "72% means the model sees strong fraud-like patterns.",
+  },
+  {
+    term: "Risk level",
+    meaning: "A readable label created from the fraud probability.",
+    example: "Low, Moderate, Elevated, or Critical.",
+  },
+  {
+    term: "Decision threshold",
+    meaning: "The probability limit used to mark a transaction as fraud.",
+    example: "With a 55% threshold, 56% becomes Fraudulent.",
+  },
+  {
+    term: "Recommendation",
+    meaning: "The suggested action for the analyst based on risk.",
+    example: "Approve, monitor, manual review, or block/hold.",
+  },
+  {
+    term: "Risk signals",
+    meaning: "Human-readable reasons that explain why risk increased.",
+    example: "High amount or merchant far from customer location.",
+  },
+  {
+    term: "Model version",
+    meaning: "The name of the trained model currently used by the app.",
+    example: "Random Forest v1.0.",
+  },
+  {
+    term: "Accuracy",
+    meaning: "How often the model is correct overall.",
+    example: "Can look high when fraud is rare, so it is not enough alone.",
+  },
+  {
+    term: "Precision",
+    meaning: "Of transactions predicted as fraud, how many were actually fraud.",
+    example: "High precision means fewer false fraud alerts.",
+  },
+  {
+    term: "Recall",
+    meaning: "Of real fraud transactions, how many the model caught.",
+    example: "High recall means fewer missed fraud cases.",
+  },
+  {
+    term: "F1 score",
+    meaning: "A balance between precision and recall.",
+    example: "Useful when fraud and legitimate transactions are imbalanced.",
+  },
+  {
+    term: "ROC-AUC",
+    meaning: "Measures how well the model separates fraud from legitimate transactions.",
+    example: "Closer to 1.0 is better.",
+  },
+  {
+    term: "Confusion matrix",
+    meaning: "A table showing correct and incorrect predictions.",
+    example: "It shows true legit, false fraud, missed fraud, and caught fraud.",
+  },
+];
+
 const fallbackMetrics = {
   model_version: "Random Forest v1.0",
   model_source: "Demo rules engine",
@@ -84,6 +188,8 @@ function App() {
   const riskPercent = result ? Math.round(result.fraud_probability * 100) : 0;
   const resultClass = result?.prediction === 1 ? "danger" : "safe";
   const statusLabel = result ? result.risk_level : "Ready";
+  const pendingCount = history.filter((item) => item.analyst_decision === "Pending").length;
+  const fraudCount = history.filter((item) => item.prediction === 1).length;
 
   const distance = useMemo(
     () => calculateDistance(form.lat, form.long, form.merch_lat, form.merch_long),
@@ -108,6 +214,13 @@ function App() {
     setForm((current) => ({
       ...current,
       [name]: type === "number" ? Number(value) : value,
+    }));
+  }
+
+  function applyPreset(values) {
+    setForm((current) => ({
+      ...current,
+      ...values,
     }));
   }
 
@@ -191,6 +304,10 @@ function App() {
             <Database size={16} />
             {metrics.model_version}
           </span>
+          <span>
+            <Clock3 size={16} />
+            {pendingCount} pending
+          </span>
         </div>
       </section>
 
@@ -198,7 +315,7 @@ function App() {
         <Metric icon={CircleDollarSign} label="Amount" value={`$${form.amt.toFixed(2)}`} />
         <Metric icon={Building2} label="Merchant" value={form.merchant.replace("fraud_", "")} />
         <Metric icon={MapPin} label="Distance" value={`${Math.round(distance)} mi`} />
-        <Metric icon={SlidersHorizontal} label="Threshold" value={`${Math.round(metrics.threshold * 100)}%`} />
+        <Metric icon={AlertTriangle} label="Flagged" value={`${fraudCount} of ${history.length || 0}`} />
       </section>
 
       <nav className="tabs" aria-label="Dashboard views">
@@ -214,6 +331,10 @@ function App() {
           <BarChart3 size={17} />
           Metrics
         </button>
+        <button className={activeView === "terms" ? "active" : ""} onClick={() => setActiveView("terms")}>
+          <BookOpenText size={17} />
+          Terms
+        </button>
       </nav>
 
       {activeView === "score" && (
@@ -222,6 +343,23 @@ function App() {
             <div className="panel-title">
               <span>Transaction Intake</span>
               <CreditCard size={20} />
+            </div>
+
+            <div className="preset-bar" aria-label="Transaction examples">
+              {transactionPresets.map((preset) => {
+                const Icon = preset.icon;
+                return (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => applyPreset(preset.values)}
+                    title={`Load ${preset.label} example`}
+                  >
+                    <Icon size={16} />
+                    {preset.label}
+                  </button>
+                );
+              })}
             </div>
 
             <Field label="Amount" name="amt" type="number" step="0.01" value={form.amt} onChange={updateField} />
@@ -267,7 +405,7 @@ function App() {
                 </div>
                 <div className="score-row">
                   <span>{riskPercent}% fraud probability</span>
-                  <span>{result.model_version}</span>
+                  <span>{Math.round(result.threshold * 100)}% threshold</span>
                 </div>
                 <p className="result-copy">{result.recommendation}</p>
 
@@ -305,6 +443,8 @@ function App() {
       )}
 
       {activeView === "metrics" && <MetricsView metrics={metrics} />}
+
+      {activeView === "terms" && <TermsView terms={glossaryTerms} />}
     </main>
   );
 }
@@ -480,6 +620,33 @@ function MetricsView({ metrics }) {
           <strong>{confusion[1]?.[0] ?? 0}</strong>
           <strong>{confusion[1]?.[1] ?? 0}</strong>
         </div>
+      </div>
+    </section>
+  );
+}
+
+function TermsView({ terms }) {
+  return (
+    <section className="terms-layout">
+      <div className="panel terms-intro">
+        <div className="panel-title">
+          <span>UI Terms Explained</span>
+          <Info size={20} />
+        </div>
+        <p>
+          These are the words used in the dashboard. They help you understand what
+          the fraud model predicted, why it predicted it, and how strong the result is.
+        </p>
+      </div>
+
+      <div className="terms-grid">
+        {terms.map((item) => (
+          <article className="term-card" key={item.term}>
+            <h2>{item.term}</h2>
+            <p>{item.meaning}</p>
+            <span>{item.example}</span>
+          </article>
+        ))}
       </div>
     </section>
   );
