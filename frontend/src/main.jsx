@@ -39,6 +39,7 @@ const categories = [
 
 const CUSTOM_COUNTRY = "Custom country";
 const CUSTOM_STATE = "Custom state / region";
+const CUSTOM_CITY = "Custom city";
 
 const countryRegions = {
   India: [
@@ -167,6 +168,143 @@ const countryRegions = {
 };
 
 const countries = [...Object.keys(countryRegions), CUSTOM_COUNTRY];
+
+const cityCatalog = {
+  India: {
+    "Andhra Pradesh": [
+      { name: "Visakhapatnam", lat: 17.6868, long: 83.2185, city_pop: 2035922 },
+      { name: "Vijayawada", lat: 16.5062, long: 80.648, city_pop: 1476931 },
+      { name: "Guntur", lat: 16.3067, long: 80.4365, city_pop: 743654 },
+    ],
+    "Arunachal Pradesh": [{ name: "Itanagar", lat: 27.0844, long: 93.6053, city_pop: 59490 }],
+    Assam: [
+      { name: "Guwahati", lat: 26.1445, long: 91.7362, city_pop: 1116267 },
+      { name: "Dibrugarh", lat: 27.4728, long: 94.912, city_pop: 154296 },
+    ],
+    Bihar: [
+      { name: "Patna", lat: 25.5941, long: 85.1376, city_pop: 1684222 },
+      { name: "Gaya", lat: 24.7914, long: 85.0002, city_pop: 474093 },
+    ],
+    Chhattisgarh: [
+      { name: "Raipur", lat: 21.2514, long: 81.6296, city_pop: 1010433 },
+      { name: "Bhilai", lat: 21.1938, long: 81.3509, city_pop: 625138 },
+    ],
+    Goa: [
+      { name: "Panaji", lat: 15.4909, long: 73.8278, city_pop: 40017 },
+      { name: "Margao", lat: 15.2832, long: 73.9862, city_pop: 87650 },
+    ],
+    Gujarat: [
+      { name: "Ahmedabad", lat: 23.0225, long: 72.5714, city_pop: 5570585 },
+      { name: "Surat", lat: 21.1702, long: 72.8311, city_pop: 4467797 },
+      { name: "Vadodara", lat: 22.3072, long: 73.1812, city_pop: 1666703 },
+    ],
+    Haryana: [
+      { name: "Gurugram", lat: 28.4595, long: 77.0266, city_pop: 876824 },
+      { name: "Faridabad", lat: 28.4089, long: 77.3178, city_pop: 1414050 },
+    ],
+    "Himachal Pradesh": [
+      { name: "Shimla", lat: 31.1048, long: 77.1734, city_pop: 169578 },
+      { name: "Dharamshala", lat: 32.219, long: 76.3234, city_pop: 30764 },
+    ],
+    Jharkhand: [
+      { name: "Ranchi", lat: 23.3441, long: 85.3096, city_pop: 1073427 },
+      { name: "Jamshedpur", lat: 22.8046, long: 86.2029, city_pop: 629659 },
+    ],
+    Karnataka: [
+      { name: "Bengaluru", lat: 12.9716, long: 77.5946, city_pop: 8443675 },
+      { name: "Mysuru", lat: 12.2958, long: 76.6394, city_pop: 887446 },
+    ],
+    Kerala: [
+      { name: "Kochi", lat: 9.9312, long: 76.2673, city_pop: 677381 },
+      { name: "Thiruvananthapuram", lat: 8.5241, long: 76.9366, city_pop: 957730 },
+    ],
+    "Madhya Pradesh": [
+      { name: "Bhopal", lat: 23.2599, long: 77.4126, city_pop: 1798218 },
+      { name: "Indore", lat: 22.7196, long: 75.8577, city_pop: 1964086 },
+      { name: "Gwalior", lat: 26.2183, long: 78.1828, city_pop: 1069276 },
+    ],
+    Maharashtra: [
+      { name: "Mumbai", lat: 19.076, long: 72.8777, city_pop: 12442373 },
+      { name: "Pune", lat: 18.5204, long: 73.8567, city_pop: 3124458 },
+      { name: "Nagpur", lat: 21.1458, long: 79.0882, city_pop: 2405665 },
+    ],
+    Manipur: [{ name: "Imphal", lat: 24.817, long: 93.9368, city_pop: 264986 }],
+    Meghalaya: [
+      { name: "Shillong", lat: 25.5788, long: 91.8933, city_pop: 143229 },
+      { name: "Tura", lat: 25.5144, long: 90.2024, city_pop: 74858 },
+    ],
+    Mizoram: [{ name: "Aizawl", lat: 23.7271, long: 92.7176, city_pop: 293416 }],
+    Nagaland: [
+      { name: "Kohima", lat: 25.6751, long: 94.1086, city_pop: 99039 },
+      { name: "Dimapur", lat: 25.9091, long: 93.7266, city_pop: 122834 },
+    ],
+    Odisha: [
+      { name: "Bhubaneswar", lat: 20.2961, long: 85.8245, city_pop: 837737 },
+      { name: "Cuttack", lat: 20.4625, long: 85.883, city_pop: 606007 },
+    ],
+    Punjab: [
+      { name: "Ludhiana", lat: 30.901, long: 75.8573, city_pop: 1618879 },
+      { name: "Amritsar", lat: 31.634, long: 74.8723, city_pop: 1132383 },
+    ],
+    Rajasthan: [
+      { name: "Jaipur", lat: 26.9124, long: 75.7873, city_pop: 3046163 },
+      { name: "Jodhpur", lat: 26.2389, long: 73.0243, city_pop: 1033918 },
+    ],
+    Sikkim: [{ name: "Gangtok", lat: 27.3314, long: 88.6138, city_pop: 100286 }],
+    "Tamil Nadu": [
+      { name: "Chennai", lat: 13.0827, long: 80.2707, city_pop: 4646732 },
+      { name: "Coimbatore", lat: 11.0168, long: 76.9558, city_pop: 1061447 },
+      { name: "Madurai", lat: 9.9252, long: 78.1198, city_pop: 1016885 },
+    ],
+    Telangana: [
+      { name: "Hyderabad", lat: 17.385, long: 78.4867, city_pop: 6809970 },
+      { name: "Warangal", lat: 17.9689, long: 79.5941, city_pop: 620116 },
+    ],
+    Tripura: [{ name: "Agartala", lat: 23.8315, long: 91.2868, city_pop: 400004 }],
+    "Uttar Pradesh": [
+      { name: "Lucknow", lat: 26.8467, long: 80.9462, city_pop: 2817105 },
+      { name: "Kanpur", lat: 26.4499, long: 80.3319, city_pop: 2765348 },
+      { name: "Varanasi", lat: 25.3176, long: 82.9739, city_pop: 1198491 },
+    ],
+    Uttarakhand: [
+      { name: "Dehradun", lat: 30.3165, long: 78.0322, city_pop: 578420 },
+      { name: "Haridwar", lat: 29.9457, long: 78.1642, city_pop: 228832 },
+    ],
+    "West Bengal": [
+      { name: "Kolkata", lat: 22.5726, long: 88.3639, city_pop: 4496694 },
+      { name: "Siliguri", lat: 26.7271, long: 88.3953, city_pop: 513264 },
+    ],
+    "Andaman and Nicobar Islands": [{ name: "Port Blair", lat: 11.6234, long: 92.7265, city_pop: 100608 }],
+    Chandigarh: [{ name: "Chandigarh", lat: 30.7333, long: 76.7794, city_pop: 960787 }],
+    "Dadra and Nagar Haveli and Daman and Diu": [
+      { name: "Daman", lat: 20.3974, long: 72.8328, city_pop: 44652 },
+      { name: "Silvassa", lat: 20.2763, long: 73.0083, city_pop: 98265 },
+    ],
+    Delhi: [
+      { name: "New Delhi", lat: 28.6139, long: 77.209, city_pop: 257803 },
+      { name: "Delhi", lat: 28.7041, long: 77.1025, city_pop: 11034555 },
+    ],
+    "Jammu and Kashmir": [
+      { name: "Srinagar", lat: 34.0837, long: 74.7973, city_pop: 1180570 },
+      { name: "Jammu", lat: 32.7266, long: 74.857, city_pop: 502197 },
+    ],
+    Ladakh: [{ name: "Leh", lat: 34.1526, long: 77.5771, city_pop: 30870 }],
+    Lakshadweep: [{ name: "Kavaratti", lat: 10.5593, long: 72.6358, city_pop: 11210 }],
+    Puducherry: [{ name: "Puducherry", lat: 11.9416, long: 79.8083, city_pop: 244377 }],
+  },
+  "United States": {
+    CA: [
+      { name: "Los Angeles", lat: 34.0522, long: -118.2437, city_pop: 3898747 },
+      { name: "San Francisco", lat: 37.7749, long: -122.4194, city_pop: 873965 },
+    ],
+    CO: [{ name: "Denver", lat: 39.7392, long: -104.9903, city_pop: 715522 }],
+    NY: [{ name: "New York", lat: 40.7128, long: -74.006, city_pop: 8804190 }],
+    TX: [
+      { name: "Houston", lat: 29.7604, long: -95.3698, city_pop: 2304580 },
+      { name: "Dallas", lat: 32.7767, long: -96.797, city_pop: 1304379 },
+    ],
+  },
+};
 
 const initialForm = {
   amt: 129.85,
@@ -323,6 +461,23 @@ const fallbackMetrics = {
   positive_rate: null,
 };
 
+function getCities(country, state) {
+  return cityCatalog[country]?.[state] || [];
+}
+
+function withCityDetails(formData, city) {
+  if (!city) {
+    return formData;
+  }
+  return {
+    ...formData,
+    city: city.name,
+    lat: city.lat,
+    long: city.long,
+    city_pop: city.city_pop,
+  };
+}
+
 function App() {
   const [form, setForm] = useState(initialForm);
   const [result, setResult] = useState(null);
@@ -346,9 +501,18 @@ function App() {
     }
     return [...regions, CUSTOM_STATE];
   }, [form.country, form.state]);
+  const availableCities = useMemo(() => getCities(form.country, form.state), [form.country, form.state]);
+  const cityOptions = useMemo(() => {
+    const cities = availableCities.map((city) => city.name);
+    if (form.city && form.city !== CUSTOM_CITY && !cities.includes(form.city)) {
+      return [...cities, form.city, CUSTOM_CITY];
+    }
+    return [...cities, CUSTOM_CITY];
+  }, [availableCities, form.city]);
   const isCustomCountry = form.country === CUSTOM_COUNTRY || !countryRegions[form.country];
   const isCustomState =
     form.state === CUSTOM_STATE || !(countryRegions[form.country] || []).includes(form.state);
+  const isCustomCity = form.city === CUSTOM_CITY || !availableCities.some((city) => city.name === form.city);
   const riskPercent = result ? Math.round(result.fraud_probability * 100) : 0;
   const resultClass = result?.prediction === 1 ? "danger" : "safe";
   const statusLabel = result ? result.risk_level : "Ready";
@@ -385,10 +549,32 @@ function App() {
   function updateCountry(event) {
     const country = event.target.value;
     const regions = countryRegions[country] || [];
+    const state = regions[0] || CUSTOM_STATE;
+    const city = getCities(country, state)[0];
     setForm((current) => ({
-      ...current,
+      ...withCityDetails(current, city),
       country,
-      state: regions[0] || CUSTOM_STATE,
+      state,
+      city: city?.name || CUSTOM_CITY,
+    }));
+  }
+
+  function updateState(event) {
+    const state = event.target.value;
+    const city = getCities(form.country, state)[0];
+    setForm((current) => ({
+      ...withCityDetails(current, city),
+      state,
+      city: city?.name || CUSTOM_CITY,
+    }));
+  }
+
+  function updateCity(event) {
+    const cityName = event.target.value;
+    const city = availableCities.find((item) => item.name === cityName);
+    setForm((current) => ({
+      ...withCityDetails(current, city),
+      city: cityName,
     }));
   }
 
@@ -573,13 +759,21 @@ function App() {
                 onChange={updateField}
               />
             )}
-            <Field label="City" name="city" value={form.city} onChange={updateField} />
-            <Select label="State / Region" name="state" value={form.state} options={stateOptions} onChange={updateField} />
+            <Select label="State / Region" name="state" value={form.state} options={stateOptions} onChange={updateState} />
             {isCustomState && (
               <Field
                 label="Custom State / Region"
                 name="state"
                 value={form.state === CUSTOM_STATE ? "" : form.state}
+                onChange={updateField}
+              />
+            )}
+            <Select label="City" name="city" value={form.city} options={cityOptions} onChange={updateCity} />
+            {isCustomCity && (
+              <Field
+                label="Custom City"
+                name="city"
+                value={form.city === CUSTOM_CITY ? "" : form.city}
                 onChange={updateField}
               />
             )}
