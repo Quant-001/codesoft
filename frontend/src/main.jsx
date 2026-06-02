@@ -12,6 +12,7 @@ import {
   Clock3,
   CreditCard,
   Database,
+  Globe2,
   Info,
   Loader2,
   MapPin,
@@ -36,20 +37,150 @@ const categories = [
   "travel",
 ];
 
-const states = ["NC", "CA", "NY", "TX", "FL", "IL", "PA", "OH", "GA", "AZ"];
+const CUSTOM_COUNTRY = "Custom country";
+const CUSTOM_STATE = "Custom state / region";
+
+const countryRegions = {
+  India: [
+    "Andhra Pradesh",
+    "Arunachal Pradesh",
+    "Assam",
+    "Bihar",
+    "Chhattisgarh",
+    "Goa",
+    "Gujarat",
+    "Haryana",
+    "Himachal Pradesh",
+    "Jharkhand",
+    "Karnataka",
+    "Kerala",
+    "Madhya Pradesh",
+    "Maharashtra",
+    "Manipur",
+    "Meghalaya",
+    "Mizoram",
+    "Nagaland",
+    "Odisha",
+    "Punjab",
+    "Rajasthan",
+    "Sikkim",
+    "Tamil Nadu",
+    "Telangana",
+    "Tripura",
+    "Uttar Pradesh",
+    "Uttarakhand",
+    "West Bengal",
+    "Andaman and Nicobar Islands",
+    "Chandigarh",
+    "Dadra and Nagar Haveli and Daman and Diu",
+    "Delhi",
+    "Jammu and Kashmir",
+    "Ladakh",
+    "Lakshadweep",
+    "Puducherry",
+  ],
+  "United States": [
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+    "DC",
+  ],
+  Canada: [
+    "Alberta",
+    "British Columbia",
+    "Manitoba",
+    "New Brunswick",
+    "Newfoundland and Labrador",
+    "Northwest Territories",
+    "Nova Scotia",
+    "Nunavut",
+    "Ontario",
+    "Prince Edward Island",
+    "Quebec",
+    "Saskatchewan",
+    "Yukon",
+  ],
+  Australia: [
+    "Australian Capital Territory",
+    "New South Wales",
+    "Northern Territory",
+    "Queensland",
+    "South Australia",
+    "Tasmania",
+    "Victoria",
+    "Western Australia",
+  ],
+  "United Kingdom": ["England", "Northern Ireland", "Scotland", "Wales"],
+  Germany: ["Baden-Wurttemberg", "Bavaria", "Berlin", "Brandenburg", "Bremen", "Hamburg", "Hesse", "Lower Saxony", "Saxony", "Thuringia"],
+  France: ["Auvergne-Rhone-Alpes", "Brittany", "Corsica", "Grand Est", "Ile-de-France", "Normandy", "Nouvelle-Aquitaine", "Occitanie", "Provence-Alpes-Cote d'Azur"],
+  Brazil: ["Acre", "Bahia", "Ceara", "Distrito Federal", "Goias", "Minas Gerais", "Parana", "Pernambuco", "Rio de Janeiro", "Sao Paulo"],
+  Japan: ["Aichi", "Chiba", "Fukuoka", "Hokkaido", "Hyogo", "Kanagawa", "Kyoto", "Osaka", "Saitama", "Tokyo"],
+  "United Arab Emirates": ["Abu Dhabi", "Ajman", "Dubai", "Fujairah", "Ras Al Khaimah", "Sharjah", "Umm Al Quwain"],
+  Singapore: ["Central Region", "East Region", "North Region", "North-East Region", "West Region"],
+};
+
+const countries = [...Object.keys(countryRegions), CUSTOM_COUNTRY];
 
 const initialForm = {
   amt: 129.85,
   category: "shopping_net",
   merchant: "fraud_Kilback LLC",
   gender: "F",
-  city: "Moravian Falls",
-  state: "NC",
-  job: "Psychologist",
-  lat: 36.0788,
-  long: -81.1781,
-  merch_lat: 36.0112,
-  merch_long: -82.0483,
+  country: "India",
+  city: "Bhopal",
+  state: "Madhya Pradesh",
+  job: "Doctor",
+  lat: 23.2599,
+  long: 77.4126,
+  merch_lat: 19.076,
+  merch_long: 72.8777,
   city_pop: 3495,
   unix_time: 1325376018,
 };
@@ -157,8 +288,18 @@ const glossaryTerms = [
   },
   {
     term: "Confusion matrix",
-    meaning: "A table showing correct and incorrect predictions.",
-    example: "It shows true legit, false fraud, missed fraud, and caught fraud.",
+    meaning: "A small table that compares what really happened with what the model predicted.",
+    example: "It shows correct legit, false alarms, missed fraud, and caught fraud.",
+  },
+  {
+    term: "History",
+    meaning: "The list of transactions you already scored in this dashboard.",
+    example: "Use it to review old scores, probabilities, and analyst decisions.",
+  },
+  {
+    term: "Terms",
+    meaning: "A plain-English glossary for dashboard and model words.",
+    example: "Open it when a word like precision, recall, or matrix is unclear.",
   },
 ];
 
@@ -192,6 +333,22 @@ function App() {
   const [decisionLoading, setDecisionLoading] = useState("");
   const [activeView, setActiveView] = useState("score");
 
+  const countryOptions = useMemo(() => {
+    if (form.country && !countries.includes(form.country)) {
+      return [...countries.slice(0, -1), form.country, CUSTOM_COUNTRY];
+    }
+    return countries;
+  }, [form.country]);
+  const stateOptions = useMemo(() => {
+    const regions = countryRegions[form.country] || [];
+    if (form.state && form.state !== CUSTOM_STATE && !regions.includes(form.state)) {
+      return [...regions, form.state, CUSTOM_STATE];
+    }
+    return [...regions, CUSTOM_STATE];
+  }, [form.country, form.state]);
+  const isCustomCountry = form.country === CUSTOM_COUNTRY || !countryRegions[form.country];
+  const isCustomState =
+    form.state === CUSTOM_STATE || !(countryRegions[form.country] || []).includes(form.state);
   const riskPercent = result ? Math.round(result.fraud_probability * 100) : 0;
   const resultClass = result?.prediction === 1 ? "danger" : "safe";
   const statusLabel = result ? result.risk_level : "Ready";
@@ -222,6 +379,16 @@ function App() {
     setForm((current) => ({
       ...current,
       [name]: type === "number" ? Number(value) : value,
+    }));
+  }
+
+  function updateCountry(event) {
+    const country = event.target.value;
+    const regions = countryRegions[country] || [];
+    setForm((current) => ({
+      ...current,
+      country,
+      state: regions[0] || CUSTOM_STATE,
     }));
   }
 
@@ -319,7 +486,7 @@ function App() {
           <h1>FraudShield Review Desk</h1>
           <p className="summary">
             Score transactions, explain model risk, capture analyst decisions, and
-            monitor model quality from one operational workspace.
+            monitor model quality from one customizable operational workspace.
           </p>
         </div>
         <div className="hero-actions" aria-label="System status">
@@ -330,6 +497,10 @@ function App() {
           <span>
             <Database size={16} />
             {metrics.model_version}
+          </span>
+          <span>
+            <Globe2 size={16} />
+            {form.country}
           </span>
           <span>
             <Clock3 size={16} />
@@ -393,8 +564,25 @@ function App() {
             <Select label="Category" name="category" value={form.category} options={categories} onChange={updateField} />
             <Field label="Merchant" name="merchant" value={form.merchant} onChange={updateField} />
             <Select label="Gender" name="gender" value={form.gender} options={["F", "M"]} onChange={updateField} />
+            <Select label="Country" name="country" value={form.country} options={countryOptions} onChange={updateCountry} />
+            {isCustomCountry && (
+              <Field
+                label="Custom Country"
+                name="country"
+                value={form.country === CUSTOM_COUNTRY ? "" : form.country}
+                onChange={updateField}
+              />
+            )}
             <Field label="City" name="city" value={form.city} onChange={updateField} />
-            <Select label="State" name="state" value={form.state} options={states} onChange={updateField} />
+            <Select label="State / Region" name="state" value={form.state} options={stateOptions} onChange={updateField} />
+            {isCustomState && (
+              <Field
+                label="Custom State / Region"
+                name="state"
+                value={form.state === CUSTOM_STATE ? "" : form.state}
+                onChange={updateField}
+              />
+            )}
             <Field label="Job" name="job" value={form.job} onChange={updateField} />
             <Field label="Customer Latitude" name="lat" type="number" step="0.0001" value={form.lat} onChange={updateField} />
             <Field label="Customer Longitude" name="long" type="number" step="0.0001" value={form.long} onChange={updateField} />
@@ -603,9 +791,12 @@ function MetricsView({ metrics }) {
     <section className="metrics-layout">
       <div className="panel metrics-card">
         <div className="panel-title">
-          <span>Model Quality</span>
+          <span>Metrics: Model Quality</span>
           <BarChart3 size={20} />
         </div>
+        <p className="panel-note">
+          Metrics are the model report card: they show how correctly and reliably fraud is detected.
+        </p>
         <div className="quality-grid">
           <Quality label="Accuracy" value={metrics.accuracy} />
           <Quality label="Precision" value={metrics.precision} />
@@ -654,6 +845,9 @@ function MetricsView({ metrics }) {
           <span>Confusion Matrix</span>
           <ShieldCheck size={20} />
         </div>
+        <p className="panel-note">
+          Matrix means table. This one shows correct predictions and mistakes side by side.
+        </p>
         <div className="confusion-grid">
           <span />
           <b>Pred Legit</b>
@@ -679,8 +873,8 @@ function TermsView({ terms }) {
           <Info size={20} />
         </div>
         <p>
-          These are the words used in the dashboard. They help you understand what
-          the fraud model predicted, why it predicted it, and how strong the result is.
+          History means your past scored transactions. Metrics means the model report
+          card. Terms means this glossary. Matrix means a table.
         </p>
       </div>
 

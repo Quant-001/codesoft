@@ -47,11 +47,18 @@ CREDIT/
 │   │   ├── metrics.py
 │   │   ├── predict.py
 │   │   └── transactions.py
-│   └── src/
-│       ├── main.jsx
-│       └── styles.css
+│   ├── src/
+│   │   ├── main.jsx
+│   │   └── styles.css
+│   ├── package.json
+│   └── vite.config.js
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── .env.example
+├── .gitignore
 ├── docker-compose.yml
-└── .github/workflows/ci.yml
+└── README.md
 ```
 
 ## Dataset Setup
@@ -157,4 +164,16 @@ http://localhost:8765
 
 - Vercel frontend deployments can use the `frontend/api` serverless functions for demo scoring.
 - Full deployments should run the FastAPI backend on Render, Railway, Fly.io, or Docker and set `VITE_API_URL` to that backend URL.
-- SQLite is suitable for local/demo use. PostgreSQL is recommended for a multi-user production deployment.
+- Render backend setup:
+  - Use the root `render.yaml` Blueprint, or create a Python web service with root directory `backend`.
+  - Build command: `pip install -r requirements.txt`
+  - Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+  - Set `CORS_ORIGINS` to your Vercel URL, for example `https://your-app.vercel.app`.
+- Vercel frontend setup:
+  - Set the Vercel project root directory to `frontend`.
+  - Framework preset: Vite
+  - Build command: `npm run build`
+  - Output directory: `dist`
+  - For a full backend deployment, set `VITE_API_URL` to your Render URL, for example `https://credit-fraud-backend.onrender.com`.
+  - For demo-only Vercel scoring, leave `VITE_API_URL` as `/api`.
+- SQLite is suitable for local/demo use. On Render free tier, local file changes are ephemeral. PostgreSQL or a paid persistent disk is recommended for production history.
